@@ -1,4 +1,5 @@
 import * as d3 from 'd3';
+import data from './gameData.json';
 import './index.css';
 
 const colors = [...d3.schemeSet1, ...d3.schemeSet2, ...d3.schemeSet3];
@@ -21,72 +22,66 @@ const treemap = d3.treemap()
   .size([width, height])
   .paddingInner(1);
 
-const url = 'https://cdn.rawgit.com/freeCodeCamp/testable-projects-fcc/a80ce8f9/src/data/tree_map/video-game-sales-data.json';
+const root = d3.hierarchy(data)
+  .sum(d => d.value)
+  .sort((a, b) => b.height - a.height || b.value - a.value);
 
-d3.json(url)
-  .then((data) => {
-    const root = d3.hierarchy(data)
-      .sum(d => d.value)
-      .sort((a, b) => b.height - a.height || b.value - a.value);
+treemap(root);
 
-    treemap(root);
+const cell = svg.selectAll('g')
+  .data(root.leaves())
+  .enter()
+  .append('g')
+  .attr('transform', d => `translate(${d.x0}, ${d.y0})`);
 
-    const cell = svg.selectAll('g')
-      .data(root.leaves())
-      .enter()
-      .append('g')
-      .attr('transform', d => `translate(${d.x0}, ${d.y0})`);
-
-    cell.append('rect')
-      .attr('class', 'tile')
-      .attr('width', d => d.x1 - d.x0)
-      .attr('height', d => d.y1 - d.y0)
-      .attr('fill', d => color(d.parent.data.name))
-      .attr('data-name', d => d.data.name)
-      .attr('data-category', d => d.data.category)
-      .attr('data-value', d => d.data.value)
-      .on('mouseover', (d) => {
-        tooltip.transition().style('opacity', 0.9);
-        tooltip
-          .html(
-            `Name: ${d.data.name}<br />
-            Category: ${d.data.category}<br />
-            Value: ${d.data.value}`,
-          )
-          .attr('data-value', d.data.value)
-          .style('left', `${d3.event.pageX + 12.5}px`)
-          .style('top', `${d3.event.pageY - 20}px`);
-      })
-      .on('mouseout', () => {
-        tooltip.transition().style('opacity', 0);
-      });
-
-    cell.append('text')
-      .selectAll('tspan')
-      .data(d => d.data.name.split(/(?=[A-Z][^A-Z])/g))
-      .enter()
-      .append('tspan')
-      .attr('x', 4)
-      .attr('y', (d, i) => 13 + i * 10)
-      .text(d => d);
-
-    legend.selectAll('rect')
-      .data(root.children)
-      .enter()
-      .append('rect')
-      .attr('class', 'legend-item')
-      .attr('height', 18)
-      .attr('width', 18)
-      .attr('x', (d, i) => (i % 3) * 75)
-      .attr('y', (d, i) => Math.floor(i / 3) * 27)
-      .attr('fill', d => color(d.data.name));
-
-    legend.selectAll('text')
-      .data(root.children)
-      .enter()
-      .append('text')
-      .attr('x', (d, i) => (i % 3) * 75 + 27)
-      .attr('y', (d, i) => Math.floor(i / 3) * 27 + 16)
-      .text(d => d.data.name);
+cell.append('rect')
+  .attr('class', 'tile')
+  .attr('width', d => d.x1 - d.x0)
+  .attr('height', d => d.y1 - d.y0)
+  .attr('fill', d => color(d.parent.data.name))
+  .attr('data-name', d => d.data.name)
+  .attr('data-category', d => d.data.category)
+  .attr('data-value', d => d.data.value)
+  .on('mouseover', (d) => {
+    tooltip.transition().style('opacity', 0.9);
+    tooltip
+      .html(
+        `Name: ${d.data.name}<br />
+        Category: ${d.data.category}<br />
+        Value: ${d.data.value}`,
+      )
+      .attr('data-value', d.data.value)
+      .style('left', `${d3.event.pageX + 12.5}px`)
+      .style('top', `${d3.event.pageY - 20}px`);
   })
-  .catch((err) => { console.log(err); });
+  .on('mouseout', () => {
+    tooltip.transition().style('opacity', 0);
+  });
+
+cell.append('text')
+  .selectAll('tspan')
+  .data(d => d.data.name.split(/(?=[A-Z][^A-Z])/g))
+  .enter()
+  .append('tspan')
+  .attr('x', 4)
+  .attr('y', (d, i) => 13 + i * 10)
+  .text(d => d);
+
+legend.selectAll('rect')
+  .data(root.children)
+  .enter()
+  .append('rect')
+  .attr('class', 'legend-item')
+  .attr('height', 18)
+  .attr('width', 18)
+  .attr('x', (d, i) => (i % 3) * 75)
+  .attr('y', (d, i) => Math.floor(i / 3) * 27)
+  .attr('fill', d => color(d.data.name));
+
+legend.selectAll('text')
+  .data(root.children)
+  .enter()
+  .append('text')
+  .attr('x', (d, i) => (i % 3) * 75 + 27)
+  .attr('y', (d, i) => Math.floor(i / 3) * 27 + 16)
+  .text(d => d.data.name);
