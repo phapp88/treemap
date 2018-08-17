@@ -36,6 +36,10 @@ const cell = svg.selectAll('g')
 
 cell.append('rect')
   .attr('class', 'tile')
+  .attr('id', (d) => {
+    d.data.id = d.data.name.split(' ').join('-');
+    return d.data.id;
+  })
   .attr('width', d => d.x1 - d.x0)
   .attr('height', d => d.y1 - d.y0)
   .attr('fill', d => color(d.parent.data.name))
@@ -58,7 +62,13 @@ cell.append('rect')
     tooltip.transition().style('opacity', 0);
   });
 
+cell.append('clipPath')
+  .attr('id', d => `clip-${d.data.id}`)
+  .append('use')
+  .attr('href', d => `#${d.data.id}`);
+
 cell.append('text')
+  .attr('clip-path', d => `url(#clip-${d.data.id})`)
   .selectAll('tspan')
   .data(d => d.data.name.split(/(?=[A-Z][^A-Z])/g))
   .enter()
